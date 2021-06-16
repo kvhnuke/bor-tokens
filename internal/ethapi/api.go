@@ -1547,6 +1547,61 @@ func (s *PublicTransactionPoolAPI) GetTransactionByHash(ctx context.Context, has
 	return nil, nil
 }
 
+// AccountTokenBalance represent the account token balance result
+type AccountTokenBalanceResult struct {
+	Contract common.Address `json:"contract"`
+	Balance  string         `json:"balance"`
+}
+
+func (s *PublicTransactionPoolAPI) GetAccountTokens(ctx context.Context, address common.Address) ([]AccountTokenBalanceResult, error) {
+	// Try to return an already finalized transaction
+	db := rawdb.NewTable(s.b.ChainDb(), rawdb.TokenBalancePrefix)
+	var contracts []common.Address
+	var response []AccountTokenBalanceResult
+	bNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
+	iter, idx := db.NewIterator(address.Bytes(), nil), 0
+	for iter.Next() {
+		if len(iter.Value()) > 20 {
+			db.Delete(iter.Key())
+		} else {
+			contracts = append(contracts, common.BytesToAddress(iter.Value()))
+		}
+		idx++
+		if idx > 10000 {
+			break
+		}
+	}
+	fmt.Printf("contracts length %d \n", idx)
+	if len(contracts) > 0 {
+		for _, contract := range contracts {
+			balanceCall := hexutil.Bytes(append(hexutil.MustDecode("0x70a08231"), address.Hash().Bytes()...))
+			result, err := DoCall(ctx, s.b, CallArgs{
+				To:   &contract,
+				Data: &balanceCall,
+			}, bNrOrHash, &StateOverride{}, vm.Config{}, 5*time.Second, s.b.RPCGasCap())
+			if len(result.Return()) > 0 {
+				balance := new(big.Int).SetBytes(result.Return())
+				if balance.Cmp(common.Big0) != 0 {
+					response = append(response, AccountTokenBalanceResult{Contract: contract, Balance: hexutil.EncodeBig(balance)})
+				} else {
+					db.Delete(append(address.Bytes(), contract.Bytes()...))
+				}
+			} else {
+				db.Delete(append(address.Bytes(), contract.Bytes()...))
+			}
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			}
+		}
+		if len(response) == 0 {
+			return []AccountTokenBalanceResult{}, nil
+		}
+		return response, nil
+	}
+
+	return []AccountTokenBalanceResult{}, nil
+}
+
 // GetRawTransactionByHash returns the bytes of the transaction for the given hash.
 func (s *PublicTransactionPoolAPI) GetRawTransactionByHash(ctx context.Context, hash common.Hash) (hexutil.Bytes, error) {
 	// Retrieve a finalized transaction, or a pooled otherwise
