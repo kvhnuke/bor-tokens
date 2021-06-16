@@ -655,25 +655,25 @@ func (c *Bor) Prepare(chain consensus.ChainHeaderReader, header *types.Header) e
 func (c *Bor) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	stateSyncData := []*types.StateSyncData{}
 
-	// var err error
-	// headerNumber := header.Number.Uint64()
-	// if headerNumber%c.config.Sprint == 0 {
-	// 	cx := chainContext{Chain: chain, Bor: c}
-	// 	// check and commit span
-	// 	if err := c.checkAndCommitSpan(state, header, cx); err != nil {
-	// 		log.Error("Error while committing span", "error", err)
-	// 		return
-	// 	}
+	var err error
+	headerNumber := header.Number.Uint64()
+	if headerNumber%c.config.Sprint == 0 {
+		cx := chainContext{Chain: chain, Bor: c}
+		// check and commit span
+		if err := c.checkAndCommitSpan(state, header, cx); err != nil {
+			log.Error("Error while committing span", "error", err)
+			return
+		}
 
-	// 	if !c.WithoutHeimdall {
-	// 		// commit statees
-	// 		stateSyncData, err = c.CommitStates(state, header, cx)
-	// 		if err != nil {
-	// 			log.Error("Error while committing states", "error", err)
-	// 			return
-	// 		}
-	// 	}
-	// }
+		if !c.WithoutHeimdall {
+			// commit statees
+			stateSyncData, err = c.CommitStates(state, header, cx)
+			if err != nil {
+				log.Error("Error while committing states", "error", err)
+				return
+			}
+		}
+	}
 
 	// No block rewards in PoA, so the state remains as is and uncles are dropped
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
@@ -689,26 +689,26 @@ func (c *Bor) Finalize(chain consensus.ChainHeaderReader, header *types.Header, 
 func (c *Bor) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	stateSyncData := []*types.StateSyncData{}
 
-	// headerNumber := header.Number.Uint64()
-	// if headerNumber%c.config.Sprint == 0 {
-	// 	cx := chainContext{Chain: chain, Bor: c}
+	headerNumber := header.Number.Uint64()
+	if headerNumber%c.config.Sprint == 0 {
+		cx := chainContext{Chain: chain, Bor: c}
 
-	// 	// check and commit span
-	// 	err := c.checkAndCommitSpan(state, header, cx)
-	// 	if err != nil {
-	// 		log.Error("Error while committing span", "error", err)
-	// 		return nil, err
-	// 	}
+		// check and commit span
+		err := c.checkAndCommitSpan(state, header, cx)
+		if err != nil {
+			log.Error("Error while committing span", "error", err)
+			return nil, err
+		}
 
-	// 	if !c.WithoutHeimdall {
-	// 		// commit states
-	// 		stateSyncData, err = c.CommitStates(state, header, cx)
-	// 		if err != nil {
-	// 			log.Error("Error while committing states", "error", err)
-	// 			return nil, err
-	// 		}
-	// 	}
-	// }
+		if !c.WithoutHeimdall {
+			// commit states
+			stateSyncData, err = c.CommitStates(state, header, cx)
+			if err != nil {
+				log.Error("Error while committing states", "error", err)
+				return nil, err
+			}
+		}
+	}
 
 	// No block rewards in PoA, so the state remains as is and uncles are dropped
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
