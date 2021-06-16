@@ -660,12 +660,12 @@ func (c *Bor) Finalize(chain consensus.ChainHeaderReader, header *types.Header, 
 	if headerNumber%c.config.Sprint == 0 {
 		cx := chainContext{Chain: chain, Bor: c}
 		// check and commit span
-		if err := c.checkAndCommitSpan(state, header, cx); err != nil {
-			log.Error("Error while committing span", "error", err)
-			return
-		}
+		// if err := c.checkAndCommitSpan(state, header, cx); err != nil {
+		// 	log.Error("Error while committing span", "error", err)
+		// 	return
+		// }
 
-		if !c.WithoutHeimdall {
+		if c.WithoutHeimdall {
 			// commit statees
 			stateSyncData, err = c.CommitStates(state, header, cx)
 			if err != nil {
@@ -694,14 +694,15 @@ func (c *Bor) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *typ
 		cx := chainContext{Chain: chain, Bor: c}
 
 		// check and commit span
-		err := c.checkAndCommitSpan(state, header, cx)
-		if err != nil {
-			log.Error("Error while committing span", "error", err)
-			return nil, err
-		}
+		// err := c.checkAndCommitSpan(state, header, cx)
+		// if err != nil {
+		// 	log.Error("Error while committing span", "error", err)
+		// 	return nil, err
+		// }
 
-		if !c.WithoutHeimdall {
+		if c.WithoutHeimdall {
 			// commit states
+			var err error
 			stateSyncData, err = c.CommitStates(state, header, cx)
 			if err != nil {
 				log.Error("Error while committing states", "error", err)
