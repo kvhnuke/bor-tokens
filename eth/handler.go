@@ -158,15 +158,9 @@ func newHandler(config *handlerConfig) (*handler, error) {
 			log.Warn("Switch sync mode from full sync to fast sync")
 		}
 	} else {
-		if h.chain.CurrentBlock().NumberU64() > 0 {
-			// Print warning log if database is not empty to run fast sync.
-			log.Warn("Switch sync mode from fast sync to full sync")
-		} else {
-			// If fast sync was requested and our database is empty, grant it
-			h.fastSync = uint32(1)
-			if config.Sync == downloader.SnapSync {
-				h.snapSync = uint32(1)
-			}
+		h.fastSync = uint32(1)
+		if config.Sync == downloader.SnapSync {
+			h.snapSync = uint32(1)
 		}
 	}
 	// If we have trusted checkpoints, enforce them on the chain
