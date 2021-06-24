@@ -1278,6 +1278,8 @@ func (s *PublicBlockChainAPI) EstimateGasList(ctx context.Context, argsList []Ca
 		stateData *PreviousState
 		gasCap    = s.b.RPCGasCap()
 	)
+	stateData = &PreviousState{}
+	stateData.state, stateData.header, _ = s.b.StateAndHeaderByNumberOrHash(ctx, blockNrOrHash)
 	returnVals := make([]hexutil.Uint64, len(argsList))
 	for idx, args := range argsList {
 		gas, stateData, err = DoEstimateGasWithState(ctx, s.b, args, stateData, blockNrOrHash, s.b.RPCGasCap())
