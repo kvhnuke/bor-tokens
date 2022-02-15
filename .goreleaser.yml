@@ -109,9 +109,6 @@ dockers:
       - linux-amd64
     build_flag_templates:
       - --platform=linux/amd64
-    extra_files:
-      - builder/files/genesis-mainnet-v1.json
-      - builder/files/genesis-testnet-v4.json
   
   - image_templates:
       - 0xpolygon/{{ .ProjectName }}:{{ .Version }}-arm64
@@ -121,10 +118,7 @@ dockers:
     ids:
       - linux-arm64
     build_flag_templates:
-      - --platform=linux/arm64/v8
-    extra_files:
-      - builder/files/genesis-mainnet-v1.json
-      - builder/files/genesis-testnet-v4.json
+      - --platform=linux/arm64
 
 docker_manifests:
   - name_template: 0xpolygon/{{ .ProjectName }}:{{ .Version }}
