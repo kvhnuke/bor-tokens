@@ -1936,10 +1936,10 @@ func (s *PublicBlockChainAPI) GetAccountTokens(ctx context.Context, address comm
 			balance := ret[0].(*big.Int)
 			if balance.Cmp(common.Big0) != 0 {
 				response = append(response, AccountTokenBalanceResult{Contract: contract, Balance: hexutil.EncodeBig(balance)})
-			} else {
+			} else if s.b.SyncProgress().CurrentBlock == s.b.SyncProgress().HighestBlock {
 				db.Delete(append(address.Bytes(), contract.Bytes()...))
 			}
-		} else {
+		} else if s.b.SyncProgress().CurrentBlock == s.b.SyncProgress().HighestBlock {
 			db.Delete(append(address.Bytes(), contract.Bytes()...))
 		}
 		if err != nil {
