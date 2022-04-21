@@ -1905,9 +1905,9 @@ func (s *PublicBlockChainAPI) GetAccountTokens(ctx context.Context, address comm
 	db := rawdb.NewTable(s.b.ChainDb(), rawdb.TokenBalancePrefix)
 	var contracts []common.Address
 	var response []AccountTokenBalanceResult
-	accountBalance, _ := s.GetBalance(ctx, address, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+	accountBalance, _ := s.GetBalance(ctx, address, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	response = append(response, AccountTokenBalanceResult{Contract: common.HexToAddress("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"), Balance: accountBalance.String()})
-	bNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
+	bNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber)
 	iter, idx := db.NewIterator(address.Bytes(), nil), 0
 	for iter.Next() {
 		if len(iter.Value()) > 20 {
