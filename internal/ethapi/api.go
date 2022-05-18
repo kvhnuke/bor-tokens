@@ -1901,7 +1901,8 @@ type AccountTokenBalanceResult struct {
 }
 
 func (s *PublicBlockChainAPI) GetAccountTokens(ctx context.Context, address common.Address) ([]AccountTokenBalanceResult, error) {
-	// Try to return an already finalized transaction
+	// Try to return an already finalized transaction.
+	matic_token := common.HexToAddress("0x0000000000000000000000000000000000001010")
 	db := rawdb.NewTable(s.b.ChainDb(), rawdb.TokenBalancePrefix)
 	var contracts []common.Address
 	var response []AccountTokenBalanceResult
@@ -1925,6 +1926,9 @@ func (s *PublicBlockChainAPI) GetAccountTokens(ctx context.Context, address comm
 	Uint256, _ := abi.NewType("uint256", "", nil)
 	balanceOf := abi.NewMethod("balanceOf", "balanceOf", abi.Function, "", true, false, []abi.Argument{{"owner", Address, false}}, []abi.Argument{{"balance", Uint256, false}})
 	for _, contract := range contracts {
+		if contract.Hash() == matic_token.Hash() {
+			continue
+		}
 		balanceCall, _ := balanceOf.Inputs.Pack(address)
 		balanceCallHex := hexutil.Bytes(append(balanceOf.ID, balanceCall...))
 		result, err := DoCall(ctx, s.b, TransactionArgs{
