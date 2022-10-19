@@ -87,7 +87,7 @@ type handlerConfig struct {
 	EventMux   *event.TypeMux            // Legacy event mux, deprecate for `feed`
 	Checkpoint *params.TrustedCheckpoint // Hard coded checkpoint for sync challenges
 
-	PeerRequiredBlocks map[uint64]common.Hash // Hard coded map of required block hashes for sync challenges
+	RequiredBlocks map[uint64]common.Hash // Hard coded map of required block hashes for sync challenges
 }
 
 type handler struct {
@@ -116,7 +116,7 @@ type handler struct {
 	txsSub        event.Subscription
 	minedBlockSub *event.TypeMuxSubscription
 
-	peerRequiredBlocks map[uint64]common.Hash
+	requiredBlocks map[uint64]common.Hash
 
 	// channels for fetcher, syncer, txsyncLoop
 	quitSync chan struct{}
@@ -133,16 +133,16 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		config.EventMux = new(event.TypeMux) // Nicety initialization for tests
 	}
 	h := &handler{
-		networkID:          config.Network,
-		forkFilter:         forkid.NewFilter(config.Chain),
-		eventMux:           config.EventMux,
-		database:           config.Database,
-		txpool:             config.TxPool,
-		chain:              config.Chain,
-		peers:              newPeerSet(),
-		merger:             config.Merger,
-		peerRequiredBlocks: config.PeerRequiredBlocks,
-		quitSync:           make(chan struct{}),
+		networkID:      config.Network,
+		forkFilter:     forkid.NewFilter(config.Chain),
+		eventMux:       config.EventMux,
+		database:       config.Database,
+		txpool:         config.TxPool,
+		chain:          config.Chain,
+		peers:          newPeerSet(),
+		merger:         config.Merger,
+		requiredBlocks: config.RequiredBlocks,
+		quitSync:       make(chan struct{}),
 	}
 	if config.Sync == downloader.FullSync {
 		// The database seems empty as the current block is the genesis. Yet the snap
@@ -155,8 +155,15 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		// In these cases however it's safe to reenable snap sync.
 		fullBlock, fastBlock := h.chain.CurrentBlock(), h.chain.CurrentFastBlock()
 		if fullBlock.NumberU64() == 0 && fastBlock.NumberU64() > 0 {
-			h.snapSync = uint32(1)
-			log.Warn("Switch sync mode from full sync to snap sync")
+			// Note: Ideally this should never happen with bor, but to be extra
+			// preventive we won't allow it to roll over to snap sync until
+			// we have it working
+
+			// TODO(snap): Uncomment when we have snap sync working
+			// h.snapSync = uint32(1)
+			// log.Warn("Switch sync mode from full sync to snap sync")
+
+			log.Warn("Preventing switching sync mode from full sync to snap sync")
 		}
 	} else {
 		if h.chain.CurrentBlock().NumberU64() > 0 {
@@ -425,7 +432,7 @@ func (h *handler) runEthPeer(peer *eth.Peer, handler eth.Handler) error {
 		}()
 	}
 	// If we have any explicit peer required block hashes, request them
-	for number := range h.peerRequiredBlocks {
+	for number, hash := range h.requiredBlocks {
 		resCh := make(chan *eth.Response)
 		if _, err := peer.RequestHeadersByNumber(number, 1, 0, false, resCh); err != nil {
 			return err
